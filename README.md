@@ -241,13 +241,14 @@ Each chunk saved in Pinecone looks like this:
     "text": "You do not rise to the level of your goals..."
   }
 }
-
+```
 ---
 
 ## 🔄 Complete Application Flow
 
-### 📥 Book Upload & Indexing Flow
+### 📥 Book Upload & Indexing
 
+```
 Upload Book
 ↓
 Extract Text (PDF/DOCX/OCR)
@@ -257,31 +258,33 @@ Split into Chunks
 Generate Embeddings
 ↓
 Store in Pinecone (with bookId metadata)
-
+```
 
 ---
 
-### ❓ Question Answering Flow
+### ❓ Question Answering
 
+```
 User Question
 ↓
 Convert to Embedding
 ↓
-Pinecone Similarity Search
-(+ optional bookId filter)
+Pinecone Similarity Search (+ optional bookId filter)
 ↓
 Top Matching Chunks
 ↓
-Send Context(pincone data) + Question to Gemini
+Send Context + Question to Gemini
 ↓
 Generate Answer
 ↓
 Send to user
+```
 
 ---
 
 ## 📊 Architecture Flow Diagram
 
+```
 Upload Book
 ↓
 Text Extract
@@ -290,19 +293,34 @@ Chunk Text
 ↓
 Create Embedding
 ↓
-Store in Pinecone(with bookId metadata)
+Store in Pinecone (with bookId metadata)
+
 User Question
 ↓
 Create Question Embedding
 ↓
-Pinecone Search
-(filter by bookId if provided)
+Pinecone Search (filter by bookId)
 ↓
 Top Matching Chunks
 ↓
 Gemini 1.5 Flash
 ↓
-Answer send to user
+Answer sent to user
+```
 
 ---
+
+## ⭐ Features
+
+* 📄 Multi-format upload (PDF, DOCX, TXT, Images)
+* 🔎 Book-specific semantic search
+* ⚡ Fast Gemini-powered answers
+* 🧠 Retrieval-Augmented Generation (RAG)
+* 📚 Multi-book knowledge base
+
+---
+
+## 📜 License
+
+MIT License — free to use and modify.
 
