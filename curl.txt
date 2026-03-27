@@ -1,0 +1,21 @@
+1. check server health
+curl --location 'http://localhost:3000/api/health' \
+--header 'Accept: application/json'
+
+2. upload book
+curl --location --request POST 'http://localhost:3000/api/upload' \
+--header 'Accept: application/json'
+
+3. ask question and about book(ai feature)
+curl --location 'http://localhost:3000/api/query' \
+--header 'Content-Type: application/json' \
+--header 'Accept: application/json' \
+--data '{
+    "question": "How many milestones are there in the project?",
+    "bookId": "308c16d6-b008-4f5d-8dfd-f76df9d2d495",
+    "bookTitle": "project delivery plan"
+}'
+
+4. list all books
+curl --location 'http://localhost:3000/api/books' \
+--header 'Accept: application/json'

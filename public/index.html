@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📚 Book Q&A — Ask Your Books</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f13; color: #e8e8f0; min-height: 100vh; }
+    header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-bottom: 1px solid #2a2a4a; padding: 20px 32px; display: flex; align-items: center; gap: 14px; }
+    header .logo { font-size: 32px; }
+    header h1 { font-size: 22px; font-weight: 700; color: #a78bfa; }
+    header p { font-size: 13px; color: #888; margin-top: 2px; }
+    .app { display: grid; grid-template-columns: 320px 1fr; height: calc(100vh - 73px); }
+    .sidebar { background: #13131f; border-right: 1px solid #2a2a4a; display: flex; flex-direction: column; overflow: hidden; }
+    .sidebar-section { padding: 20px; border-bottom: 1px solid #2a2a4a; }
+    .sidebar-section h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 14px; }
+    .upload-zone { border: 2px dashed #3a3a5a; border-radius: 12px; padding: 24px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+    .upload-zone:hover, .upload-zone.drag-over { border-color: #a78bfa; background: #1a1a35; }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+    .upload-zone .icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-zone p { font-size: 13px; color: #888; }
+    .upload-zone p span { color: #a78bfa; font-weight: 600; }
+    .title-input { width: 100%; background: #1e1e30; border: 1px solid #3a3a5a; border-radius: 8px; padding: 10px 12px; color: #e8e8f0; font-size: 13px; margin-top: 12px; outline: none; }
+    .title-input:focus { border-color: #a78bfa; }
+    .title-input::placeholder { color: #555; }
+    .btn { width: 100%; padding: 11px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: all 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .progress-bar { height: 4px; background: #2a2a4a; border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
+    .progress-bar.show { display: block; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 4px; animation: shimmer 1.5s infinite; width: 70%; }
+    @keyframes shimmer { 0% { opacity:1; } 50% { opacity:0.5; } 100% { opacity:1; } }
+    .status-msg { font-size: 12px; color: #a78bfa; text-align: center; margin-top: 8px; min-height: 18px; }
+    .books-list { flex: 1; overflow-y: auto; padding: 12px; }
+    .books-list::-webkit-scrollbar { width: 4px; }
+    .books-list::-webkit-scrollbar-thumb { background: #3a3a5a; border-radius: 4px; }
+    .book-item { background: #1e1e30; border: 1px solid #2a2a4a; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+    .book-item:hover { border-color: #7c3aed; background: #22223a; }
+    .book-item.active { border-color: #a78bfa; background: #1f1f3a; }
+    .book-item .book-title { font-size: 13px; font-weight: 600; color: #c4b5fd; margin-bottom: 4px; padding-right: 24px; }
+    .book-item .book-meta { font-size: 11px; color: #666; }
+    .book-item .delete-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #555; cursor: pointer; font-size: 14px; padding: 2px; }
+    .book-item .delete-btn:hover { color: #ef4444; }
+    .book-all-item { background: #1a2a1a; border-color: #2a4a2a; }
+    .book-all-item.active { border-color: #4ade80; }
+    .book-all-item .book-title { color: #86efac; }
+    .empty-books { text-align: center; color: #555; font-size: 13px; padding: 24px 12px; }
+    .main { display: flex; flex-direction: column; background: #0f0f13; }
+    .selected-book-bar { padding: 12px 24px; background: #13131f; border-bottom: 1px solid #2a2a4a; font-size: 13px; color: #888; display: flex; align-items: center; gap: 8px; }
+    .selected-book-bar strong { color: #c4b5fd; }
+    .chat-area { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+    .chat-area::-webkit-scrollbar { width: 4px; }
+    .chat-area::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 4px; }
+    .welcome { text-align: center; padding: 60px 20px; color: #555; }
+    .welcome .big-icon { font-size: 64px; margin-bottom: 16px; }
+    .welcome h2 { font-size: 22px; color: #888; margin-bottom: 8px; }
+    .welcome p { font-size: 14px; line-height: 1.6; max-width: 400px; margin: 0 auto; }
+    .message { max-width: 800px; }
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: flex-start; width: 100%; }
+    .msg-bubble { padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+    .user .msg-bubble { background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; border-bottom-right-radius: 4px; }
+    .assistant .msg-bubble { background: #1e1e30; border: 1px solid #2a2a4a; color: #e8e8f0; border-bottom-left-radius: 4px; }
+    .sources { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .source-tag { background: #1a1a35; border: 1px solid #3a3a5a; border-radius: 20px; padding: 4px 10px; font-size: 11px; color: #888; }
+    .thinking { display: flex; align-items: center; gap: 10px; color: #666; font-size: 13px; padding: 14px 18px; background: #1e1e30; border: 1px solid #2a2a4a; border-radius: 16px; border-bottom-left-radius: 4px; width: fit-content; }
+    .dots span { display: inline-block; width: 6px; height: 6px; background: #7c3aed; border-radius: 50%; animation: bounce 1.2s infinite; }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+    .chat-input-area { padding: 16px 24px; background: #13131f; border-top: 1px solid #2a2a4a; display: flex; gap: 12px; align-items: flex-end; }
+    .chat-input { flex: 1; background: #1e1e30; border: 1px solid #3a3a5a; border-radius: 12px; padding: 12px 16px; color: #e8e8f0; font-size: 14px; resize: none; outline: none; font-family: inherit; max-height: 120px; line-height: 1.5; }
+    .chat-input:focus { border-color: #7c3aed; }
+    .chat-input::placeholder { color: #555; }
+    .chat-input:disabled { opacity: 0.5; }
+    .send-btn { background: linear-gradient(135deg, #7c3aed, #a78bfa); border: none; border-radius: 12px; width: 46px; height: 46px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.2s; flex-shrink: 0; }
+    .send-btn:hover { opacity: 0.9; transform: scale(1.05); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 999; animation: slideIn 0.3s ease; max-width: 320px; }
+    .toast.success { background: #14532d; border: 1px solid #4ade80; color: #86efac; }
+    .toast.error { background: #450a0a; border: 1px solid #f87171; color: #fca5a5; }
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+    @media (max-width: 700px) { .app { grid-template-columns: 1fr; } .sidebar { height: 50vh; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">📚</div>
+  <div><h1>Book Q&amp;A</h1><p>Upload any book — ask any question</p></div>
+</header>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h2>Upload Book</h2>
+      <div class="upload-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.webp" />
+        <div class="icon">📂</div>
+        <p><span>Click to browse</span> or drag &amp; drop</p>
+        <p style="margin-top:4px;font-size:11px;">PDF, DOCX, TXT, PNG, JPG</p>
+      </div>
+      <input class="title-input" type="text" id="bookTitle" placeholder="Book title (optional)" />
+      <div class="progress-bar" id="progressBar"><div class="progress-fill"></div></div>
+      <div class="status-msg" id="statusMsg"></div>
+      <button class="btn btn-primary" id="uploadBtn" disabled>Upload &amp; Process</button>
+    </div>
+    <div class="sidebar-section" style="padding-bottom:8px;"><h2>Your Books</h2></div>
+    <div class="books-list" id="booksList">
+      <div class="empty-books">No books yet.<br/>Upload your first book above!</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="selected-book-bar">Searching in: <strong id="selectedBookName">All Books</strong></div>
+    <div class="chat-area" id="chatArea">
+      <div class="welcome">
+        <div class="big-icon">🤖</div>
+        <h2>Ask anything about your books</h2>
+        <p>Upload a book on the left, then ask me anything. I'll find the answer directly from the book's content.</p>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chatInput" placeholder="Ask a question about your book..." rows="1"></textarea>
+      <button class="send-btn" id="sendBtn" disabled>&#10148;</button>
+    </div>
+  </main>
+</div>
+<script>
+const API='';let selectedBookId=null;let isQuerying=false;
+const fileInput=document.getElementById('fileInput');
+const dropZone=document.getElementById('dropZone');
+const uploadBtn=document.getElementById('uploadBtn');
+const progressBar=document.getElementById('progressBar');
+const statusMsg=document.getElementById('statusMsg');
+const bookTitleInput=document.getElementById('bookTitle');
+const chatInput=document.getElementById('chatInput');
+const sendBtn=document.getElementById('sendBtn');
+const chatArea=document.getElementById('chatArea');
+let selectedFile=null;
+
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])setFile(fileInput.files[0]);});
+dropZone.addEventListener('dragover',(e)=>{e.preventDefault();dropZone.classList.add('drag-over');});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop',(e)=>{e.preventDefault();dropZone.classList.remove('drag-over');if(e.dataTransfer.files[0])setFile(e.dataTransfer.files[0]);});
+
+function setFile(file){selectedFile=file;const name=file.name.replace(/\.[^/.]+$/,'');if(!bookTitleInput.value)bookTitleInput.value=name;uploadBtn.disabled=false;statusMsg.textContent='Selected: '+file.name;dropZone.querySelector('p').innerHTML='<span>'+file.name+'</span>';}
+
+uploadBtn.addEventListener('click',async()=>{
+  if(!selectedFile)return;
+  uploadBtn.disabled=true;progressBar.classList.add('show');statusMsg.textContent='Extracting text from file...';
+  const formData=new FormData();formData.append('book',selectedFile);
+  if(bookTitleInput.value.trim())formData.append('title',bookTitleInput.value.trim());
+  try{
+    statusMsg.textContent='Generating embeddings (this may take a minute)...';
+    const res=await fetch(API+'/api/upload',{method:'POST',body:formData});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Upload failed');
+    statusMsg.textContent='';progressBar.classList.remove('show');
+    showToast('Book "'+data.book.title+'" uploaded! ('+data.book.chunkCount+' chunks)','success');
+    selectedFile=null;fileInput.value='';bookTitleInput.value='';
+    dropZone.querySelector('p').innerHTML='<span>Click to browse</span> or drag & drop';
+    await loadBooks();
+  }catch(err){progressBar.classList.remove('show');statusMsg.textContent='';showToast(err.message,'error');uploadBtn.disabled=false;}
+});
+
+async function loadBooks(){
+  try{const res=await fetch(API+'/api/books');const data=await res.json();renderBooks(data.books||[]);}
+  catch(e){console.error('Failed to load books',e);}
+}
+
+function renderBooks(books){
+  const list=document.getElementById('booksList');
+  if(books.length===0){list.innerHTML='<div class="empty-books">No books yet.<br/>Upload your first book above!</div>';sendBtn.disabled=true;chatInput.disabled=true;chatInput.placeholder='Upload a book first...';return;}
+  sendBtn.disabled=false;chatInput.disabled=false;chatInput.placeholder='Ask a question about your book...';
+  let html='<div class="book-item book-all-item '+(selectedBookId===null?'active':'')+'" onclick="selectBook(null,\'All Books\',this)"><div class="book-title">🌐 Search All Books</div><div class="book-meta">'+books.length+' book'+(books.length!==1?'s':'')+' total</div></div>';
+  books.slice().reverse().forEach(book=>{
+    const date=new Date(book.uploadedAt).toLocaleDateString();
+    html+='<div class="book-item '+(selectedBookId===book.id?'active':'')+'" onclick="selectBook(\''+book.id+'\',\''+escHtml(book.title)+'\',this)"><div class="book-title">'+escHtml(book.title)+'</div><div class="book-meta">'+book.chunkCount+' chunks &bull; '+date+'</div><button class="delete-btn" onclick="event.stopPropagation();deleteBook(\''+book.id+'\',\''+escHtml(book.title)+'\')">✕</button></div>';
+  });
+  list.innerHTML=html;
+}
+
+function escHtml(str){return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function selectBook(id,title,el){
+  selectedBookId=id;
+  document.getElementById('selectedBookName').textContent=title;
+  document.querySelectorAll('.book-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function deleteBook(id,title){
+  if(!confirm('Delete "'+title+'"? This cannot be undone.'))return;
+  try{
+    const res=await fetch(API+'/api/books/'+id,{method:'DELETE'});
+    const data=await res.json();if(!res.ok)throw new Error(data.error);
+    if(selectedBookId===id){selectedBookId=null;document.getElementById('selectedBookName').textContent='All Books';}
+    showToast('"'+title+'" deleted','success');await loadBooks();
+  }catch(e){showToast(e.message,'error');}
+}
+
+chatInput.addEventListener('input',()=>{chatInput.style.height='auto';chatInput.style.height=Math.min(chatInput.scrollHeight,120)+'px';sendBtn.disabled=!chatInput.value.trim()||isQuerying;});
+chatInput.addEventListener('keydown',(e)=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
+sendBtn.addEventListener('click',sendMessage);
+
+async function sendMessage(){
+  const q=chatInput.value.trim();if(!q||isQuerying)return;
+  const welcome=chatArea.querySelector('.welcome');if(welcome)welcome.remove();
+  isQuerying=true;chatInput.value='';chatInput.style.height='auto';sendBtn.disabled=true;
+  appendMessage('user',q);
+  const thinkingEl=appendThinking();
+  try{
+    const res=await fetch(API+'/api/query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q,bookId:selectedBookId})});
+    const data=await res.json();thinkingEl.remove();
+    if(!res.ok)throw new Error(data.error||'Query failed');
+    appendMessage('assistant',data.answer,data.sources);
+  }catch(err){thinkingEl.remove();appendMessage('assistant','Error: '+err.message);}
+  isQuerying=false;chatInput.disabled=false;chatInput.focus();
+}
+
+function appendMessage(role,text,sources=[]){
+  const div=document.createElement('div');div.className='message '+role;
+  const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=text;div.appendChild(bubble);
+  if(sources&&sources.length>0){const s=document.createElement('div');s.className='sources';sources.forEach(src=>{const t=document.createElement('span');t.className='source-tag';t.textContent='📖 '+src.bookTitle;s.appendChild(t);});div.appendChild(s);}
+  chatArea.appendChild(div);chatArea.scrollTop=chatArea.scrollHeight;return div;
+}
+
+function appendThinking(){
+  const div=document.createElement('div');div.className='message assistant';
+  div.innerHTML='<div class="thinking"><div class="dots"><span></span><span></span><span></span></div>Searching through your book...</div>';
+  chatArea.appendChild(div);chatArea.scrollTop=chatArea.scrollHeight;return div;
+}
+
+function showToast(msg,type='success'){
+  const t=document.createElement('div');t.className='toast '+type;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),4000);
+}
+
+loadBooks();
+</script>
+</body>
+</html>
